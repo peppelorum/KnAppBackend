@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<title>KnAppen</title>
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+		<script src="/assets/js/axios.min.js"></script>
+		<script src="/assets/leaflet/leaflet.js"></script>
+		<script src="/assets/leaflet/leaflet.markercluster.js"></script>
+		<link rel="stylesheet" href="/assets/leaflet/leaflet.css" />
+		<link rel="stylesheet" href="/assets/leaflet/MarkerCluster.css" />
+		<link rel="stylesheet" href="/assets/leaflet/MarkerCluster.Default.css" />
+
+		<form>
+			<label>Long:
+			<input type="text" id="lng">
+			</label>
+
+			<label>Lat:
+			<input type="text" id="lat">
+			</label>
+			<button>Skicka</button>
+		</form>
+
+		<style>
+
+			#mapid { 
+				height: 800px; 
+				width: 800px;
+			}
+
+		</style>
+		
+	</head>
+	<body>
+
+		<h1>Hej</h1>
+
+		<div id="mapid"></div>
+
+		<script src="/assets/js/script.js"></script>
+	</body>
+</html>
