@@ -58,7 +58,7 @@ namespace KnApp
 
                 services.AddControllers().AddNewtonsoftJson();
 
-                services.AddMvc();  
+                services.AddMvc();
                 services.AddSingleton<IConfiguration>(_config);  
 
                 services.AddScoped(x => new BlobServiceClient(_config.GetValue<string>("BlobStorage:Connectionstring")));
@@ -77,6 +77,13 @@ namespace KnApp
                     db.UseSqlServer(_config.GetConnectionString("piranha")));
 
                 services.AddDbContext<GeoDb>(options => options.UseSqlServer(_config.GetConnectionString("piranha"), x => x.UseNetTopologySuite()));
+
+                services.AddDbContext<TokenDb>(options => options.UseSqlServer(_config.GetConnectionString("piranha")));
+
+                // services.AddDbContext<MyAppDbContext>(options => {
+                //     options.UseSqlServer(
+                //         Configuration.GetConnectionString("DefaultConnection"));
+                // }, ServiceLifetime.Transient);
 
                 /***
                  * Here you can configure the different permissions
