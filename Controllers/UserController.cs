@@ -16,16 +16,11 @@ using Piranha.AspNetCore.Identity.Models;
 [Route("api/[controller]")]
 public class UserController : ControllerBase
 {
-
-	// private readonly DataContext _context;
-	// private readonly IConfiguration _configuration;
-	
 	private readonly Piranha.ISecurity _service;
 	private readonly IDb _db;
 	private readonly UserManager<User> _userManager;
 
 	private readonly TokenDb _tokenDb;
-
 
 	public UserController(IDb db,  UserManager<User> userManager, Piranha.ISecurity service, TokenDb tokenDb)
 	{
@@ -35,10 +30,9 @@ public class UserController : ControllerBase
 		_tokenDb = tokenDb;
 	}
 
-
 	[HttpPost]
-	[Route("/api/user/login")]
-	public async Task<ActionResult<AccountDTO>> Login([FromForm] AccountDTO item)
+	[Route("/api/user/token")]
+	public async Task<ActionResult<AccountDTO>> Token([FromForm] AccountDTO item)
 	{
 		var signedIn = await _service.SignIn(HttpContext, item.Email, item.Password);
 
@@ -63,9 +57,8 @@ public class UserController : ControllerBase
 		return BadRequest();
 	}
 
-
 	[HttpPost]
-	[Route("/api/user/save")]
+	[Route("/api/user/register")]
 	// [Authorize(Policy = Permissions.UsersSave)]
 	public async Task<IActionResult> Save([FromForm] AccountDTO inputModel) {
 
@@ -141,5 +134,26 @@ public class UserController : ControllerBase
 		{
 			return BadRequest(ex.Message);
 		}
+	}
+
+	[HttpPost]
+	[Route("/api/user/confirm")]
+	public async Task<ActionResult<AccountDTO>> Confirm(Guid id)
+	{
+		var user = _db.Users.Where(x => x.Id == id).FirstOrDefault();
+
+		if (user != null) {
+
+			if (user.EmailConfirmed) {
+				return Ok("Already confirmed");
+			}
+
+			user.EmailConfirmed = true;
+			await _db.SaveChangesAsync();
+
+			return Ok("ok");
+		}
+
+		return Ok("fel");
 	}
 }
