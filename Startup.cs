@@ -13,6 +13,7 @@ using Piranha.Data.EF.SQLServer;
 using Piranha.AspNetCore.Identity.SQLServer;
 using Azure.Storage.Blobs;
 using Services;
+using KnApp.Services;
 
 namespace KnApp
 {
@@ -63,6 +64,7 @@ namespace KnApp
 
                 services.AddScoped(x => new BlobServiceClient(_config.GetValue<string>("BlobStorage:Connectionstring")));
                 services.AddScoped<IBlobService, BlobService>();
+                services.AddScoped<IEmailService, EmailService>();
 
                 // services.AddTransient<ItemsController>();
 

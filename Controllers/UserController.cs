@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using AutoMapper.Configuration;
 using Data;
+using KnApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -19,25 +21,51 @@ public class UserController : ControllerBase
 	private readonly Piranha.ISecurity _service;
 	private readonly IDb _db;
 	private readonly UserManager<User> _userManager;
+	private readonly IEmailService _emailService;
 
 	private readonly TokenDb _tokenDb;
 
-	public UserController(IDb db,  UserManager<User> userManager, Piranha.ISecurity service, TokenDb tokenDb)
+	public UserController(IDb db,  UserManager<User> userManager, Piranha.ISecurity service, TokenDb tokenDb, IEmailService emailService)
 	{
 		_db = db;
 		_userManager = userManager;
 		_service = service;
 		_tokenDb = tokenDb;
+		_emailService = emailService;
+	}
+	
+
+
+	[HttpPost]
+	[Route("/api/user/checktoken")]
+	public async Task<ActionResult<AccountDTO>> Checktoken([FromForm] Token item)
+	{
+		// var signedIn = await _service.SignIn(HttpContext, item.Email, item.Password);
+
+		var exists = _tokenDb.Tokens.Any(x => x.APIToken == item.APIToken);
+
+		if (exists) {
+			return Ok();
+		}
+		return Unauthorized();
 	}
 
 	[HttpPost]
-	[Route("/api/user/token")]
+	[Route("/api/user/login")]
 	public async Task<ActionResult<AccountDTO>> Token([FromForm] AccountDTO item)
 	{
+
+		Console.WriteLine(item.Email);
+		Console.WriteLine(item.Password);
+		
 		var signedIn = await _service.SignIn(HttpContext, item.Email, item.Password);
 
 		if (signedIn) {
 			var user = _db.Users.Where(x => x.Email == item.Email).FirstOrDefault();
+
+			if (!user.EmailConfirmed) {
+				return BadRequest("Du måste verifiera ditt konto, kolla mailen!");
+			}
 
 			_tokenDb.Tokens.RemoveRange(_tokenDb.Tokens.Where(x => x.User == user.Id));
 			await _tokenDb.SaveChangesAsync();
@@ -54,13 +82,13 @@ public class UserController : ControllerBase
 			return CreatedAtAction(nameof(Token), new { id = token.Id }, token);
 		}
 		
-		return BadRequest();
+		return BadRequest("Felaktiga inloggningsuppgifter, var god och prova igen =)");
 	}
 
 	[HttpPost]
 	[Route("/api/user/register")]
 	// [Authorize(Policy = Permissions.UsersSave)]
-	public async Task<IActionResult> Save([FromForm] AccountDTO inputModel) {
+	public async Task<IActionResult> Register([FromForm] AccountDTO inputModel) {
 
 		var model = new UserEditModel() {
 			User = new User() {
@@ -122,7 +150,14 @@ public class UserController : ControllerBase
 
 			if ((await model.Save(_userManager)).Succeeded)
 			{
-				return Ok(model.User.Id);
+				var host = $"{Request.Scheme}://{Request.Host.Value}";
+				var url = this.Url.Action("Confirm", "User", new { id = model.User.Id });
+				var fullurl = host + url;
+
+				var html = $"Hej! <br><br>Klicka på länken nedan för att bekräfta ditt konto: <a href=\"{fullurl}\">{fullurl}</a><br><br>Mvh KnAppen";
+				await _emailService.SendAsync(model.User.Email, "Verifiera konto för KnApp", "", html);
+				
+				return Ok("Hurra! Verifiera ditt konto genom att klicka på länken i mailet du får snart.");
 			}
 
 			var errorMessages = new List<string>();
@@ -136,7 +171,7 @@ public class UserController : ControllerBase
 		}
 	}
 
-	[HttpPost]
+	[HttpGet]
 	[Route("/api/user/confirm")]
 	public async Task<ActionResult<AccountDTO>> Confirm(Guid id)
 	{
