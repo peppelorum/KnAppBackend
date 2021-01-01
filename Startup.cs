@@ -58,6 +58,7 @@ namespace KnApp
 
 
                 services.AddControllers().AddNewtonsoftJson();
+                services.AddApplicationInsightsTelemetry();
 
                 services.AddMvc();
                 services.AddSingleton<IConfiguration>(_config);  
