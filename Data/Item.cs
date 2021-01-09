@@ -4,6 +4,7 @@ using Piranha.Data.EF;
 
 using Newtonsoft.Json;
 using NetTopologySuite.Geometries;
+using Piranha.AspNetCore.Identity.Data;
 // 
 namespace Data {
 
@@ -12,7 +13,7 @@ namespace Data {
     {
         public Guid Id { get; set; }
         public DateTime? Created { get; set; }
-
+        public Guid UserId { get; set; }
         public double? Long { 
             get {
                 return Location.Coordinate.X;
